@@ -29,7 +29,6 @@ import java.util.Map;
 import java.util.Random;
 import java.util.TreeSet;
 
-import org.apache.commons.lang.RandomStringUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -446,7 +445,9 @@ public abstract class AbstractN5Test {
 		final String[] data = new String[DataBlock.getNumElements(blockSize)];
 		for (int i = 0; i < data.length; ++i) {
 			final int len = rnd.nextInt(20);
-			data[i] = RandomStringUtils.randomAlphanumeric(len);
+			final byte[] bytes = new byte[len];
+			rnd.nextBytes(bytes);
+			data[i] = new String(bytes);
 		}
 
 		for (final CompressionType compressionType : CompressionType.values()) {
