@@ -450,6 +450,7 @@ public abstract class AbstractN5Test {
 		}
 
 		for (final CompressionType compressionType : CompressionType.values()) {
+			System.out.println("Testing " + compressionType + " serializable type with String");
 			try {
 				n5.createDataset(datasetName, dimensions, blockSize, DataType.SERIALIZABLE, compressionType);
 				final DatasetAttributes attributes = n5.getDatasetAttributes(datasetName);
@@ -483,6 +484,7 @@ public abstract class AbstractN5Test {
 		}
 
 		for (final CompressionType compressionType : CompressionType.values()) {
+			System.out.println("Testing " + compressionType + " serializable type with HashSet<Integer>");
 			try {
 				n5.createDataset(datasetName, dimensions, blockSize, DataType.SERIALIZABLE, compressionType);
 				final DatasetAttributes attributes = n5.getDatasetAttributes(datasetName);
@@ -516,6 +518,7 @@ public abstract class AbstractN5Test {
 		}
 
 		for (final CompressionType compressionType : CompressionType.values()) {
+			System.out.println("Testing " + compressionType + " serializable type with BigInteger");
 			try {
 				n5.createDataset(datasetName, dimensions, blockSize, DataType.SERIALIZABLE, compressionType);
 				final DatasetAttributes attributes = n5.getDatasetAttributes(datasetName);
