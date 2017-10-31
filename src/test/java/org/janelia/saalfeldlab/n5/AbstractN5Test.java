@@ -19,13 +19,17 @@ package org.janelia.saalfeldlab.n5;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
+import java.util.TreeSet;
 
+import org.apache.commons.lang.RandomStringUtils;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -46,6 +50,8 @@ public abstract class AbstractN5Test {
 	static private final long[] dimensions = new long[]{100, 200, 300};
 	static private final int[] blockSize = new int[]{44, 33, 22};
 
+	static private Random rnd = new Random();
+
 	static private byte[] byteBlock;
 	static private short[] shortBlock;
 	static private int[] intBlock;
@@ -62,7 +68,6 @@ public abstract class AbstractN5Test {
 	@BeforeClass
 	public static void setUpBeforeClass() throws IOException {
 
-		final Random rnd = new Random();
 		byteBlock = new byte[blockSize[0] * blockSize[1] * blockSize[2]];
 		shortBlock = new short[blockSize[0] * blockSize[1] * blockSize[2]];
 		intBlock = new int[blockSize[0] * blockSize[1] * blockSize[2]];
@@ -432,6 +437,102 @@ public abstract class AbstractN5Test {
 			Assert.assertTrue(n5Parser.getAttributes(groupName2).isEmpty());
 		} catch (final IOException e) {
 			fail(e.getMessage());
+		}
+	}
+
+	@Test
+	public void testSerializableTypeString() throws IOException {
+
+		final String[] data = new String[DataBlock.getNumElements(blockSize)];
+		for (int i = 0; i < data.length; ++i) {
+			final int len = rnd.nextInt(20);
+			data[i] = RandomStringUtils.randomAlphanumeric(len);
+		}
+
+		for (final CompressionType compressionType : CompressionType.values()) {
+			try {
+				n5.createDataset(datasetName, dimensions, blockSize, DataType.SERIALIZABLE, compressionType);
+				final DatasetAttributes attributes = n5.getDatasetAttributes(datasetName);
+
+				final SerializableArrayDataBlock<String> dataBlock = new SerializableArrayDataBlock<>(blockSize, new long[]{0, 0, 0}, data);
+				n5.writeBlock(datasetName, attributes, dataBlock);
+
+				final DataBlock<?> readDataBlock = n5.readBlock(datasetName, attributes, new long[]{0, 0, 0});
+
+				final String[] readData = (String[])readDataBlock.getData();
+				Assert.assertArrayEquals(data, readData);
+
+				Assert.assertTrue(n5.remove(datasetName));
+
+			} catch (final IOException e) {
+				Assert.fail(e.getMessage());
+			}
+		}
+	}
+
+	@Test
+	public void testSerializableTypeHashSet() throws IOException {
+
+		@SuppressWarnings("unchecked")
+		final HashSet<Integer>[] data = new HashSet[DataBlock.getNumElements(blockSize)];
+		for (int i = 0; i < data.length; ++i) {
+			data[i] = new HashSet<>();
+			final int cnt = rnd.nextInt(5);
+			for (int j = 0; j < cnt; ++j)
+				data[i].add(rnd.nextInt(10) + 5);
+		}
+
+		for (final CompressionType compressionType : CompressionType.values()) {
+			try {
+				n5.createDataset(datasetName, dimensions, blockSize, DataType.SERIALIZABLE, compressionType);
+				final DatasetAttributes attributes = n5.getDatasetAttributes(datasetName);
+
+				final SerializableArrayDataBlock<HashSet<Integer>> dataBlock = new SerializableArrayDataBlock<>(blockSize, new long[]{0, 0, 0}, data);
+				n5.writeBlock(datasetName, attributes, dataBlock);
+
+				final DataBlock<?> readDataBlock = n5.readBlock(datasetName, attributes, new long[]{0, 0, 0});
+
+				@SuppressWarnings("unchecked")
+				final HashSet<Integer>[] readData = (HashSet[])readDataBlock.getData();
+				Assert.assertEquals(data.length, readData.length);
+				for (int i = 0; i < data.length; ++i)
+					Assert.assertArrayEquals(new TreeSet<>(data[i]).toArray(), new TreeSet<>(readData[i]).toArray());
+
+				Assert.assertTrue(n5.remove(datasetName));
+
+			} catch (final IOException e) {
+				Assert.fail(e.getMessage());
+			}
+		}
+	}
+
+	@Test
+	public void testSerializableTypeBigInteger() throws IOException {
+
+		final BigInteger[] data = new BigInteger[DataBlock.getNumElements(blockSize)];
+		for (int i = 0; i < data.length; ++i) {
+			final int bits = rnd.nextInt(128) + 32;
+			data[i] = new BigInteger(bits, rnd);
+		}
+
+		for (final CompressionType compressionType : CompressionType.values()) {
+			try {
+				n5.createDataset(datasetName, dimensions, blockSize, DataType.SERIALIZABLE, compressionType);
+				final DatasetAttributes attributes = n5.getDatasetAttributes(datasetName);
+
+				final SerializableArrayDataBlock<BigInteger> dataBlock = new SerializableArrayDataBlock<>(blockSize, new long[]{0, 0, 0}, data);
+				n5.writeBlock(datasetName, attributes, dataBlock);
+
+				final DataBlock<?> readDataBlock = n5.readBlock(datasetName, attributes, new long[]{0, 0, 0});
+
+				final BigInteger[] readData = (BigInteger[])readDataBlock.getData();
+				Assert.assertArrayEquals(data, readData);
+
+				Assert.assertTrue(n5.remove(datasetName));
+
+			} catch (final IOException e) {
+				Assert.fail(e.getMessage());
+			}
 		}
 	}
 }
