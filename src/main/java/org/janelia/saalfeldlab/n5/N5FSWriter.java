@@ -40,7 +40,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 /**
- * Filesystem N5 implementation.
+ * Filesystem {@link N5Writer} implementation with version compatibility check.
  *
  * @author Stephan Saalfeld
  */
@@ -50,29 +50,41 @@ public class N5FSWriter extends N5FSReader implements N5Writer {
 	 * Opens an {@link N5FSWriter} at a given base path with a custom
 	 * {@link GsonBuilder} to support custom attributes.
 	 *
-	 * If the base path is not writable, all subsequent attempts to
-	 * write attributes, groups, or datasets will fail with an
-	 * {@link IOException}.
+	 * If the base path does not exist, it will be created.
+	 *
+	 * If the base path exists and if the N5 version of the container is
+	 * compatible with this implementation, the N5 version of this container
+	 * will be set to the current N5 version of this implementation.
 	 *
 	 * @param basePath n5 base path
 	 * @param gsonBuilder
 	 * @throws IOException
+	 *    if the base path cannot be written to or cannot be created,
+	 *    if the N5 version of the container is not compatible with this
+	 *    implementation.
 	 */
 	public N5FSWriter(final String basePath, final GsonBuilder gsonBuilder) throws IOException {
 
 		super(basePath, gsonBuilder);
 		Files.createDirectories(Paths.get(basePath));
+		setAttribute("/", VERSION_KEY, VERSION.toString());
 	}
 
 	/**
 	 * Opens an {@link N5FSWriter} at a given base path.
 	 *
-	 * If the base path is not writable, all subsequent attempts to
-	 * write attributes, groups, or datasets will fail with an
-	 * {@link IOException}.
+	 * If the base path does not exist, it will be created.
+	 *
+	 * If the base path exists and if the N5 version of the container is
+	 * compatible with this implementation, the N5 version of this container
+	 * will be set to the current N5 version of this implementation.
 	 *
 	 * @param basePath n5 base path
+	 * @param gsonBuilder
 	 * @throws IOException
+	 *    if the base path cannot be written to or cannot be created,
+	 *    if the N5 version of the container is not compatible with this
+	 *    implementation.
 	 */
 	public N5FSWriter(final String basePath) throws IOException {
 

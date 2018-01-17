@@ -43,7 +43,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 
 /**
- * Filesystem N5 implementation.
+ * Filesystem {@link N5Reader} implementation with version compatibility check.
  *
  * @author Stephan Saalfeld
  */
@@ -104,21 +104,34 @@ public class N5FSReader extends AbstractGsonReader {
 	 * Opens an {@link N5FSReader} at a given base path with a custom
 	 * {@link GsonBuilder} to support custom attributes.
 	 *
-	 * @param basePath n5 base path
+	 * @param basePath N5 base path
 	 * @param gsonBuilder
+	 * @throws IOException
+	 *    if the base path cannot be read or does not exist,
+	 *    if the N5 version of the container is not compatible with this
+	 *    implementation.
 	 */
-	public N5FSReader(final String basePath, final GsonBuilder gsonBuilder) {
+	public N5FSReader(final String basePath, final GsonBuilder gsonBuilder) throws IOException {
 
 		super(gsonBuilder);
 		this.basePath = basePath;
+		if (exists("/")) {
+			final Version version = getVersion();
+			if (!VERSION.isCompatible(version))
+				throw new IOException("Incompatible version " + version + " (this is " + VERSION + ").");
+		}
 	}
 
 	/**
 	 * Opens an {@link N5FSReader} at a given base path.
 	 *
-	 * @param basePath n5 base path
+	 * @param basePath N5 base path
+	 * @throws IOException
+	 *    if the base path cannot be read or does not exist,
+	 *    if the N5 version of the container is not compatible with this
+	 *    implementation.
 	 */
-	public N5FSReader(final String basePath) {
+	public N5FSReader(final String basePath) throws IOException {
 
 		this(basePath, new GsonBuilder());
 	}
@@ -161,8 +174,7 @@ public class N5FSReader extends AbstractGsonReader {
 	public String[] list(final String pathName) throws IOException {
 
 		final Path path = Paths.get(basePath, pathName);
-		try (final Stream<Path> pathStream = Files.list(path))
-		{
+		try (final Stream<Path> pathStream = Files.list(path)) {
 			return pathStream
 					.filter(a -> Files.isDirectory(a))
 					.map(a -> path.relativize(a).toString())
