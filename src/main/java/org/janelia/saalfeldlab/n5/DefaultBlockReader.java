@@ -30,6 +30,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 
+import org.apache.commons.compress.utils.IOUtils;
+
 /**
  * Default implementation of {@link BlockReader}.
  *
@@ -45,10 +47,10 @@ public interface DefaultBlockReader extends BlockReader {
 			final B dataBlock,
 			final InputStream in) throws IOException {
 
-		final ByteBuffer buffer = dataBlock.toByteBuffer();
+		final ByteBuffer buffer;
 		try (final InputStream inflater = getInputStream(in)) {
-			final DataInputStream dis = new DataInputStream(inflater);
-			dis.readFully(buffer.array());
+			final byte[] bytes = IOUtils.toByteArray(inflater);
+			buffer = ByteBuffer.wrap(bytes);
 		}
 		dataBlock.readData(buffer);
 	}

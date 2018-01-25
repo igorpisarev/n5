@@ -25,41 +25,50 @@
  */
 package org.janelia.saalfeldlab.n5;
 
-/**
- * Abstract base class for {@link DataBlock} implementations.
- *
- * @param <T>
- *
- * @author Stephan Saalfeld
- */
-public abstract class AbstractDataBlock<T> implements DataBlock<T> {
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.nio.ByteBuffer;
 
-	protected final int[] size;
-	protected final long[] gridPosition;
-	protected T data;
+public class SerializableArrayDataBlock<T extends Serializable> extends AbstractDataBlock<T[]> {
 
-	public AbstractDataBlock(final int[] size, final long[] gridPosition, final T data) {
+	public SerializableArrayDataBlock(final int[] size, final long[] gridPosition, final T[] data) {
 
-		this.size = size;
-		this.gridPosition = gridPosition;
-		this.data = data;
+		super(size, gridPosition, data);
 	}
 
 	@Override
-	public int[] getSize() {
+	public ByteBuffer toByteBuffer() {
 
-		return size;
+		try (final ByteArrayOutputStream b = new ByteArrayOutputStream()) {
+			try (final ObjectOutputStream o = new ObjectOutputStream(b)) {
+				o.writeObject(getData());
+			}
+			return ByteBuffer.wrap(b.toByteArray());
+		} catch (final IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	@SuppressWarnings("unchecked")
+	@Override
+	public void readData(final ByteBuffer buffer) {
+
+		try (final ByteArrayInputStream b = new ByteArrayInputStream(buffer.array())) {
+			try (final ObjectInputStream o = new ObjectInputStream(b)) {
+				data = (T[])o.readObject();
+			}
+		} catch (final IOException | ClassNotFoundException e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
-	public long[] getGridPosition() {
+	public int getNumElements() {
 
-		return gridPosition;
-	}
-
-	@Override
-	public T getData() {
-
-		return data;
+		return data.length;
 	}
 }
