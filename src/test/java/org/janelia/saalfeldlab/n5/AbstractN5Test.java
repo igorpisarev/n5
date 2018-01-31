@@ -19,6 +19,7 @@ package org.janelia.saalfeldlab.n5;
 import static org.junit.Assert.fail;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -532,9 +533,7 @@ public abstract class AbstractN5Test {
 				n5.writeBlock(datasetName, attributes, dataBlock);
 
 				final DataBlock<?> readDataBlock = n5.readBlock(datasetName, attributes, new long[]{0, 0, 0});
-
-				final String[] readData = (String[])readDataBlock.getData();
-				Assert.assertArrayEquals(data, readData);
+				Assert.assertArrayEquals(data, (Serializable[])readDataBlock.getData());
 
 				Assert.assertTrue(n5.remove(datasetName));
 
@@ -544,10 +543,10 @@ public abstract class AbstractN5Test {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void testSerializableTypeHashSet() throws IOException {
 
-		@SuppressWarnings("unchecked")
 		final HashSet<Integer>[] data = new HashSet[DataBlock.getNumElements(blockSize)];
 		for (int i = 0; i < data.length; ++i) {
 			data[i] = new HashSet<>();
@@ -567,11 +566,10 @@ public abstract class AbstractN5Test {
 
 				final DataBlock<?> readDataBlock = n5.readBlock(datasetName, attributes, new long[]{0, 0, 0});
 
-				@SuppressWarnings("unchecked")
-				final HashSet<Integer>[] readData = (HashSet[])readDataBlock.getData();
+				final Serializable[] readData = (Serializable[])readDataBlock.getData();
 				Assert.assertEquals(data.length, readData.length);
 				for (int i = 0; i < data.length; ++i)
-					Assert.assertArrayEquals(new TreeSet<>(data[i]).toArray(), new TreeSet<>(readData[i]).toArray());
+					Assert.assertArrayEquals(new TreeSet<>(data[i]).toArray(), new TreeSet<>((HashSet<Integer>)readData[i]).toArray());
 
 				Assert.assertTrue(n5.remove(datasetName));
 
@@ -600,8 +598,7 @@ public abstract class AbstractN5Test {
 				n5.writeBlock(datasetName, attributes, dataBlock);
 
 				final DataBlock<?> readDataBlock = n5.readBlock(datasetName, attributes, new long[]{0, 0, 0});
-
-				final BigInteger[] readData = (BigInteger[])readDataBlock.getData();
+				final Serializable[] readData = (Serializable[])readDataBlock.getData();
 				Assert.assertArrayEquals(data, readData);
 
 				Assert.assertTrue(n5.remove(datasetName));
